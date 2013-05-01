@@ -1,0 +1,182 @@
+/*
+ * Tuenti Challenge #4
+ * José Ignacio Rojo Rivero -josi-
+ */
+
+#include "util.h"
+#include <fstream>
+#include <algorithm>
+#include <map>
+
+using namespace std;
+
+#define BLOCK 1*1024*1024
+
+vector<int> numbers;
+vector<int> req; // numbers requested
+
+struct area
+{
+	int min;
+	int max;
+	int _ack;
+	vector<int> missingi; // missing inferior
+	vector<int> missings; // missing superior
+
+	area()
+	{
+		_ack = min = max = 0;
+	}
+	area(int _min, int _max)
+	{
+		min = _min;
+		max = _max;
+		_ack = min;
+		missingi.push_back(min);
+		missings.push_back(max);
+	}
+
+	bool contains(int n)
+	{
+		return (min <= n && max >= n); 
+	}
+
+	bool process(int n)
+	{
+		if (!contains(n)) return false;
+		if (n < _ack) return false; // its already found!
+		for (size_t i = 0; i < missingi.size(); i++)
+		{
+			if (n >= missingi[i] && n <= missings[i])
+			{
+				// Remove the region,
+				// or split it
+				if (missingi[i] == missings[i])
+				{
+					// Remove region.
+				}
+				else if(missingi[i] == n)
+				{
+					// Make region smaller
+					missingi[i]++;
+				}
+				else if(missings[i] == n)
+				{
+					missings[i]--;
+				}
+				else 
+				{
+					// Split region
+					int aux = missings[i];
+					missings[i] = n-1;
+					missingi.insert(missingi.begin()+i+1, n+1);
+					missings.insert(missings.begin()+i+1, aux);
+				}
+				// recalculate ack
+				if (n == _ack+1)
+					_ack++;
+			}
+		}
+	}
+	
+	// Generate missing numbers vector in this area
+	vector<int> missing()
+	{
+		vector<int> ret;
+		for (size_t i = 0; i < missingi.size(); i++)
+			for (int k = missingi[i]; k <= missings[i]; k++)
+				ret.push_back(k);
+		return ret;
+	}
+};
+
+vector<int> missingi; // missing inferior
+vector<int> missings; // missing superior
+vector<area> areas;
+
+area& getArea(int n)
+{
+	for (size_t i = 0; i < areas.size(); i++)
+	{
+		if (areas[i].min >= n && areas[i].max <= n)
+			return areas[i];
+	}
+}
+
+// Find the minimum,
+// Find the maximum,
+// Register the missing numbers inbetween
+void processBlock(int* block)
+{
+	// Read the numbers in the block, and sort them.
+	//cout << "First number: " << block[0] << endl;
+	sort(block, block+BLOCK);
+	
+	for (int i = 0; i < BLOCK; i++)
+	{
+		// Check what is missing in between
+		// Is it already validated?
+		//int n = block[i] - block[i-1] - 1;
+		//missing += n;
+		//if (n > 0)
+		//{
+		//	missingi.push_back(block[i-1]+1);
+		//	missings.push_back(block[i  ]-1);
+		//	cout << " - Missing " << n << " from " << block[i-1]+1 << " to " << block[i]-1 << endl; 
+		//}
+
+		area a = getArea(block[i]);
+		a.process(block[i]);
+	}
+}
+
+int main (int argc, char** argv)
+{
+	string line;
+	
+	// #n of cases
+	getline(cin, line);
+	int n = stoi(line);
+	for (int i = 0; i < n; i++)
+	{
+		// Number to be found
+		getline(cin, line);
+		int k = stoi(line);
+		req.push_back(k);
+	}
+
+	int block[BLOCK];
+	long processed = 0;
+	
+	// Setup areas
+	for (int i = 0; i < 2147483648; i+=BLOCK)
+	{
+		area a(i, i+BLOCK-1);
+		areas.push_back(a);
+	}	
+
+	// Handle processing... maybe multithreaded?
+	// I need to locate ALL the numbers first...
+	ifstream file("integers");
+	if (!file.is_open())
+		return 1;
+	
+	while (file.good())
+	{
+		// Fetch a block...
+		for (int i = 0; i < BLOCK && file.good(); i++)
+		{
+			file.read((char*)&block[i], sizeof(int));
+			processed++;
+		}
+			
+		processBlock(block);
+		break;
+	}
+	
+	int total = 0;
+	for (size_t i = 0; i < areas.size(); i++)
+		total += areas[i].missing().size();
+	cout << total << " total missing numbers." << endl;
+}
+
