@@ -1,0 +1,116 @@
+/*
+ *  Tuenti Challenge #1
+ *	José Ignacio Rojo Rivero
+ */
+
+#include "utils.h"
+
+using namespace std;
+
+int computeTransaction(int budget, vector<int>& transaction)
+{
+	int total = budget;
+	for (unsigned int i = 0; i+1 < transaction.size(); i+=2)
+	{
+		total /= transaction[i  ];
+		total *= transaction[i+1]
+	}
+	return total;
+}
+
+void generateFavorableTransactions(int budget,
+								   vector<int> values,
+								   vector<int>& transaction, 
+								   vector< vector<int> >& transactions)
+{
+	// Get next favorable step and cut the vector
+	// We must sell at a higher price than we buy	
+
+	// Also, the first buy, we must have enought buget to buy!
+
+	// TEMP: Get the first value
+	int start;
+	for (start = 0; start < values.size(); start++)
+	{
+		if (values[start] <= budget )
+		{
+			// Valid buy! values[start]
+			int b = values[start];
+			// Find a favorable deal now.
+			for (unsigned int i = start+1; i < values.size(); i++)
+			{
+				int s = values[i];
+				if (s > b)
+				{
+					// Deal, but its not the only one (probably)
+					// We branch here, each entry of this for is
+					// a new branch of transactions
+					
+					vector<int> t = transaction; // copy
+					
+					// Validate b and s... shouldnt be 0??
+
+					t.push_back(b); // Buy
+					t.push_back(s); // Sell
+					transactions.push_back(t);
+
+					// Cut vector and recursive this method...
+					// Note: budget is the current budget, so
+					// it must be computed
+					int nbudget = computeTransaction(t);
+					vector<int> nvalues;
+					for (unsigned int k = i; k < values.size(); k++)
+						nvalues.push_back(values[k]);
+					generateFavorableTransactions(nbudget, nvalues, t, transactions); 
+				}
+			}
+		}
+	}
+	
+	// We have the transaction list here!
+}
+
+// Process one case
+int processCase(int budget, vector<int> values)
+{
+	// Get favorable cases (where we make profit)
+	// Evaluate those cases and pick the best
+	
+	// call generate bla bla bla
+	// compute all results, pick best and done!!!
+	// TODO!!!!!!!!
+}
+
+void processInput()
+{
+	string line;
+	getline(cin, line);
+
+	// First line => n of cases
+	int n = stoi(line);
+	// Validate n? negative, NaN, ...
+	
+	for (int i = 0; i < n; n++)
+	{
+		// Init budget
+		getline(cin, line);
+		int budget = stoi(line)
+
+		// Future values
+		getline(cin, line);
+		vector<int> values;
+		vector<string> params = split(line);
+		for (unsigned int k = 0; k < params.size(); k++)
+			values.push_back(params[k]);
+
+		// Process case
+		int total = processCase(budget, values);
+		cout << total << endl;
+	}
+}
+
+int main(int argc, char** argv)
+{
+	processInput();
+}
+
