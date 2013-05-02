@@ -12,9 +12,10 @@
 
 using namespace std;
 
+#define MAX_MEMORY 1024*1024*1024
+
 vector<int> req;
-set<int> all;
-set<int> missing;
+vector<int> missing;
 
 int main (int argc, char** argv)
 {
@@ -22,41 +23,51 @@ int main (int argc, char** argv)
 	
 	// #n of cases
 	getline(cin, line);
-	int n = stoi(line);
-	for (int i = 0; i < n; i++)
+	int k = stoi(line);
+	for (int i = 0; i < k; i++)
 	{
 		// Number to be found
 		getline(cin, line);
-		int k = stoi(line);
+		k = stoi(line);
 		req.push_back(k);
 	}
 	
-	// Handle processing... maybe multithreaded?
-	// I need to locate ALL the numbers first...
-	int max_mem = 16*1024*1024;
-	cout << "Allocating memory..." << endl;
-	for (int i = 1; i < numeric_limits<int>::max(); i+=max_mem)
+	int N = numeric_limits<int>::max();
+	int L = MAX_MEMORY/sizeof(int);
+	int* A = new int[L]; // make sure its initialized to zero
+	
+	for (int c = 0; c < N/L; c++)
 	{
-		cout << "Processing block " << 1+i/max_mem << " of " << numeric_limits<int>::max()/max_mem << endl;
-		all.erase(all.begin(), all.end());
-		for (int k = i; k < i+max_mem; k++)
-		{
-			all.insert(all.end(), i);
-		}
-		
-		ifstream file("integers");
-		if (!file.is_open()) return 1;
-		while (file.good())
-		{
-			file.read((char*)&n, sizeof(int));
-			if (n >= i && n < i+max_mem)
-			{
-				if (all.erase(n) < 1)
-					missing.insert(missing.end(), n);
-			}
-		}
-		file.close();
+	
+	cout << "[" << c+1 << "/" << N/L << "]" << endl; 
+
+	for (int i = 0; i < L ; i++)
+		A[i] = 0;
+
+	ifstream file("integers");
+
+	while( file.good() )
+	{
+		// Reuse k to read one integer
+		file.read((char*)&k, sizeof(int));
+		if (k >= c*L && k < c*L+L)
+			A[k-c*L] = k;
 	}
+
+	// Report missing ones!
+	for (int j = c*L; j < c*L+L; j++)
+		if (A[j-c*L] == 0)
+			missing.push_back(j);
+
+	file.close();
+	
+	}	
+
+	delete[] A;
+
+	// Remember to ignore the first entry! (0)
+	for (size_t j = 0; j < missing.size(); j++)
+		cout << missing[j] << endl;
 
 	cout << missing.size() << " missing!" << endl;
 	return 0;
