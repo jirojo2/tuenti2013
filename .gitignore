@@ -1,7 +1,7 @@
 *.tgz
 *.7z
 *.zip
-ch*
+/ch*
 integers
 dictionary
 temp
